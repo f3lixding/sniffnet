@@ -3,8 +3,8 @@
 //! It contains elements to select network adapter and traffic filters.
 
 use iced::widget::{
-    button, horizontal_space, vertical_space, Button, Column, Container, PickList, Row, Scrollable,
-    Text, Tooltip,
+    button, horizontal_space, text_input, vertical_space, Button, Column, Container, PickList, Row,
+    Scrollable, Text, Tooltip,
 };
 use iced::Length::FillPortion;
 use iced::{alignment, Alignment, Font, Length};
@@ -34,7 +34,17 @@ pub fn initial_page(sniffer: &Sniffer) -> Container<Message> {
     let col_ip = Column::new()
         .spacing(10)
         .width(FillPortion(5))
-        .push(col_ip_radio);
+        .push(col_ip_radio)
+        .push(asn_db_picker(
+            sniffer.style,
+            sniffer.language,
+            &sniffer.asn_db_path,
+        ))
+        .push(country_db_picker(
+            sniffer.style,
+            sniffer.language,
+            &sniffer.country_db_path,
+        ));
 
     let transport_active = sniffer.filters.transport;
     let col_transport_radio =
@@ -126,6 +136,48 @@ fn button_start(style: StyleType, language: Language) -> Tooltip<'static, Messag
     .on_press(Message::Start);
 
     let tooltip = start_translation(language).to_string();
+    //tooltip.push_str(" [⏎]");
+    Tooltip::new(content, tooltip, Position::Top)
+        .gap(5)
+        .font(get_font(style))
+        .style(<StyleTuple as Into<iced::theme::Container>>::into(
+            StyleTuple(style, ElementType::Tooltip),
+        ))
+}
+
+fn asn_db_picker(
+    style: StyleType,
+    _language: Language,
+    current_input: &str,
+) -> Tooltip<'static, Message> {
+    let placeholder = "Path to custom db for ASN lookup";
+    let content = iced::widget::row![
+        "Custom ASN DB path: ",
+        text_input(placeholder, current_input).on_input(Message::UpdateASNDBPath)
+    ];
+
+    let tooltip = "The path to custom db for ASN lookup".to_string();
+    //tooltip.push_str(" [⏎]");
+    Tooltip::new(content, tooltip, Position::Top)
+        .gap(5)
+        .font(get_font(style))
+        .style(<StyleTuple as Into<iced::theme::Container>>::into(
+            StyleTuple(style, ElementType::Tooltip),
+        ))
+}
+
+fn country_db_picker(
+    style: StyleType,
+    _language: Language,
+    current_input: &str,
+) -> Tooltip<'static, Message> {
+    let placeholder = "Path to custom db for country lookup";
+    let content = iced::widget::row![
+        "Custom Country DB path: ",
+        text_input(placeholder, current_input).on_input(Message::UpdateASNDBPath)
+    ];
+
+    let tooltip = "The path to custom db for country lookup".to_string();
     //tooltip.push_str(" [⏎]");
     Tooltip::new(content, tooltip, Position::Top)
         .gap(5)

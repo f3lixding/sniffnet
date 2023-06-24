@@ -7,7 +7,6 @@ use std::thread;
 use etherparse::PacketHeaders;
 use pcap::{Active, Capture};
 
-use crate::countries::country_utils::COUNTRY_MMDB;
 use crate::networking::manage_packets::{
     analyze_link_header, analyze_network_header, analyze_transport_header, get_address_to_lookup,
     modify_or_insert_in_map, reverse_dns_lookup,
@@ -18,7 +17,6 @@ use crate::networking::types::filters::Filters;
 use crate::networking::types::info_address_port_pair::InfoAddressPortPair;
 use crate::networking::types::my_device::MyDevice;
 use crate::networking::types::traffic_direction::TrafficDirection;
-use crate::utils::asn::ASN_MMDB;
 use crate::{AppProtocol, InfoTraffic, IpVersion, TransProtocol};
 
 /// The calling thread enters in a loop in which it waits for network packets, parses them according
@@ -29,6 +27,8 @@ pub fn parse_packets(
     mut cap: Capture<Active>,
     filters: &Filters,
     info_traffic_mutex: &Arc<Mutex<InfoTraffic>>,
+    asn_mmdb_path: Arc<String>,
+    country_mmdb_path: Arc<String>,
 ) {
     let capture_id = *current_capture_id.lock().unwrap();
 
@@ -45,8 +45,21 @@ pub fn parse_packets(
     let mut skip_packet;
     let mut reported_packet;
 
-    let country_db_reader = Arc::new(maxminddb::Reader::from_source(COUNTRY_MMDB).unwrap());
-    let asn_db_reader = Arc::new(maxminddb::Reader::from_source(ASN_MMDB).unwrap());
+    let asn_mmdb = match std::fs::read(asn_mmdb_path.as_str()) {
+        Ok(value) => value,
+        Err(_) => {
+            include_bytes!("../../resources/DB/GeoLite2-ASN.mmdb").to_vec()
+        }
+    };
+    let country_mmdb = match std::fs::read(country_mmdb_path.as_str()) {
+        Ok(value) => value,
+        Err(_) => {
+            include_bytes!("../../resources/DB/GeoLite2-Country.mmdb").to_vec()
+        }
+    };
+
+    let country_db_reader = Arc::new(maxminddb::Reader::from_source(country_mmdb).unwrap());
+    let asn_db_reader = Arc::new(maxminddb::Reader::from_source(asn_mmdb).unwrap());
 
     loop {
         match cap.next_packet() {

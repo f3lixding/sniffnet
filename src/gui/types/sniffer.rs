@@ -81,6 +81,10 @@ pub struct Sniffer {
     pub page_number: usize,
     /// Currently selected connection for inspection of its details
     pub selected_connection: usize,
+    /// Path to ASN database
+    pub asn_db_path: Arc<String>,
+    /// Path to country database
+    pub country_db_path: Arc<String>,
 }
 
 impl Sniffer {
@@ -116,6 +120,8 @@ impl Sniffer {
             search: SearchParameters::default(),
             page_number: 1,
             selected_connection: 0,
+            asn_db_path: Arc::new(String::from("../../resources/DB/GeoLite2-ASN.mmdb")),
+            country_db_path: Arc::new(String::from("../../resources/DB/GeoLite2-Country.mmdb")),
         }
     }
 
@@ -214,6 +220,14 @@ impl Sniffer {
                         return self.update(Message::UpdatePageNumber(increment));
                     }
                 }
+            }
+            Message::UpdateASNDBPath(path) => {
+                let mut new_path = Arc::new(path);
+                std::mem::swap(&mut self.asn_db_path, &mut new_path);
+            }
+            Message::UpdateCountryDBPath(path) => {
+                let mut new_path = Arc::new(path);
+                std::mem::swap(&mut self.country_db_path, &mut new_path);
             }
         }
         Command::none()
@@ -321,6 +335,8 @@ impl Sniffer {
             // no pcap error
             let current_capture_id = self.current_capture_id.clone();
             let filters = self.filters.clone();
+            let asn_ip_db_path = self.asn_db_path.clone();
+            let country_ip_db_path = self.country_db_path.clone();
             self.status_pair.1.notify_all();
             thread::Builder::new()
                 .name("thread_parse_packets".to_string())
@@ -331,6 +347,8 @@ impl Sniffer {
                         cap.unwrap(),
                         &filters,
                         &info_traffic_mutex,
+                        asn_ip_db_path,
+                        country_ip_db_path
                     );
                 })
                 .unwrap();

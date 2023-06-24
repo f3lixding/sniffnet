@@ -80,4 +80,8 @@ pub enum Message {
     UpdatePageNumber(bool),
     /// Left (false) or Right (true) arrow key has been pressed
     ArrowPressed(bool),
+    /// Update custom ASN database path
+    UpdateASNDBPath(String),
+    /// Update custom country database path
+    UpdateCountryDBPath(String)
 }

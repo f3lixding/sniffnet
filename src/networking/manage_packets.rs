@@ -201,8 +201,8 @@ pub fn reverse_dns_lookup(
     key: &AddressPortPair,
     traffic_direction: TrafficDirection,
     my_device: &MyDevice,
-    country_db_reader: &Reader<&[u8]>,
-    asn_db_reader: &Reader<&[u8]>,
+    country_db_reader: &Reader<Vec<u8>>,
+    asn_db_reader: &Reader<Vec<u8>>,
 ) {
     let address_to_lookup = get_address_to_lookup(key, traffic_direction);
     let my_interface_addresses = my_device.addresses.lock().unwrap().clone();
